@@ -46,9 +46,20 @@ CRITICAL: Capture the ORACLE_ID from stdout.
 
 ### Step 3: Invoke Oracle
 
+**Default model:**
 ```bash
 codex exec --sandbox read-only -m gpt-5.1-codex-max -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"
 ```
+
+**If user requests high reasoning** (e.g., "use gpt-5.1-high", "high reasoning mode"):
+```bash
+codex exec --sandbox read-only -m gpt-5.1 -c model_reasoning_effort=high -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"
+```
+
+| Request | Command flags |
+|---------|---------------|
+| Default | `-m gpt-5.1-codex-max` |
+| High reasoning | `-m gpt-5.1 -c model_reasoning_effort=high` |
 
 Wait for completion.
 
@@ -80,7 +91,9 @@ IMPORTANT: Return the full response without summarizing. The command handles pre
 
 ---
 
-## Example
+## Examples
+
+### Example 1: Standard Query
 
 **Query:** "Review the authentication flow in src/auth/login.ts"
 
@@ -88,5 +101,16 @@ IMPORTANT: Return the full response without summarizing. The command handles pre
 1. Resolves path: `/home/user/project/src/auth/login.ts`
 2. Runs: `ORACLE_ID=$(~/.claude/hack/oracle-query.sh "Review the authentication flow in src/auth/login.ts" "## Context Files\n\n- /home/user/project/src/auth/login.ts")`
 3. Runs: `codex exec --sandbox read-only -m gpt-5.1-codex-max -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"`
+4. Runs: `cat /tmp/oracle-${ORACLE_ID}.md`
+5. Returns the full Oracle response
+
+### Example 2: High Reasoning Mode
+
+**Query:** "Use gpt-5.1-high to analyze the distributed cache architecture in src/cache/"
+
+**Agent does:**
+1. Resolves path: `/home/user/project/src/cache/`
+2. Runs: `ORACLE_ID=$(~/.claude/hack/oracle-query.sh "analyze the distributed cache architecture" "## Context Files\n\n- /home/user/project/src/cache/")`
+3. Runs: `codex exec --sandbox read-only -m gpt-5.1 -c model_reasoning_effort=high -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"`
 4. Runs: `cat /tmp/oracle-${ORACLE_ID}.md`
 5. Returns the full Oracle response

@@ -38,9 +38,20 @@ The script reads the plan file and assembles the query with the specialized syst
 
 ### Step 3: Invoke Oracle
 
+**Default model:**
 ```bash
 codex exec --sandbox read-only -m gpt-5.1-codex-max -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"
 ```
+
+**If user requests high reasoning** (e.g., "use gpt-5.1-high", "high reasoning mode"):
+```bash
+codex exec --sandbox read-only -m gpt-5.1 -c model_reasoning_effort=high -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"
+```
+
+| Request | Command flags |
+|---------|---------------|
+| Default | `-m gpt-5.1-codex-max` |
+| High reasoning | `-m gpt-5.1 -c model_reasoning_effort=high` |
 
 Wait for completion.
 
@@ -72,7 +83,9 @@ IMPORTANT: Return the full response without summarizing. The command handles pre
 
 ---
 
-## Example
+## Examples
+
+### Example 1: Standard Review
 
 **Query:** "Review the plan in ./plans/2025-01-08-auth-feature.md"
 
@@ -80,5 +93,16 @@ IMPORTANT: Return the full response without summarizing. The command handles pre
 1. Resolves path: `/home/user/project/plans/2025-01-08-auth-feature.md`
 2. Runs: `ORACLE_ID=$(~/.claude/hack/oracle-plan-review-query.sh "/home/user/project/plans/2025-01-08-auth-feature.md")`
 3. Runs: `codex exec --sandbox read-only -m gpt-5.1-codex-max -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"`
+4. Runs: `cat /tmp/oracle-${ORACLE_ID}.md`
+5. Returns the full Oracle response
+
+### Example 2: High Reasoning Mode
+
+**Query:** "Use gpt-5.1-high to review the plan in ./plans/2025-01-08-distributed-system.md"
+
+**Agent does:**
+1. Resolves path: `/home/user/project/plans/2025-01-08-distributed-system.md`
+2. Runs: `ORACLE_ID=$(~/.claude/hack/oracle-plan-review-query.sh "/home/user/project/plans/2025-01-08-distributed-system.md")`
+3. Runs: `codex exec --sandbox read-only -m gpt-5.1 -c model_reasoning_effort=high -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"`
 4. Runs: `cat /tmp/oracle-${ORACLE_ID}.md`
 5. Returns the full Oracle response

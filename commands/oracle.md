@@ -62,6 +62,26 @@ If the response is lengthy, provide a brief summary followed by the full respons
 
 ---
 
+## Using Different Models
+
+By default, the Oracle uses `gpt-5.1-codex-max`. Users may request a different model with higher reasoning effort.
+
+**If the user asks** to use a model like "gpt-5.1-high" or requests "high reasoning":
+
+Tell the oracle agent to use the alternate model. The agent should change the codex command to:
+
+```bash
+codex exec --sandbox read-only -m gpt-5.1 -c model_reasoning_effort=high -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"
+```
+
+**Available configurations:**
+| Request | Command flags |
+|---------|---------------|
+| Default | `-m gpt-5.1-codex-max` |
+| High reasoning | `-m gpt-5.1 -c model_reasoning_effort=high` |
+
+---
+
 ## Example Flows
 
 ### Example 1: Architecture Review
