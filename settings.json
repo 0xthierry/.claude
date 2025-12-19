@@ -9,6 +9,5 @@
       "Bash(bash hack/spec_metadata.sh)"
     ]
   },
-  "enableAllProjectMcpServers": false,
-  "alwaysThinkingEnabled": false
+  "enableAllProjectMcpServers": false
 }
