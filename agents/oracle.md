@@ -35,18 +35,27 @@ Build the context string with absolute paths (if any):
 
 Then use the helper script:
 
+**For default (Codex-Max) - coding tasks:**
 ```bash
 ORACLE_ID=$(~/.claude/hack/oracle-query.sh "THE_USER_QUERY" "THE_CONTEXT_STRING")
 ```
 
+**For high reasoning mode (GPT-5.1 high) - general analysis:**
+```bash
+ORACLE_ID=$(~/.claude/hack/oracle-query.sh "THE_USER_QUERY" "THE_CONTEXT_STRING" "general")
+```
+
+The third parameter tells the script to use the general-purpose prompt optimized for reasoning-heavy, non-coding tasks.
+
 - First argument: The user's original query (exactly as provided)
 - Second argument: Context string with file paths (empty string `""` if no context)
+- Third argument (optional): "general" for high reasoning mode, omit for Codex-Max
 
 CRITICAL: Capture the ORACLE_ID from stdout.
 
 ### Step 3: Invoke Oracle
 
-**Default model:**
+**Default model (for coding tasks):**
 ```bash
 codex exec --sandbox read-only -m gpt-5.1-codex-max -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"
 ```
@@ -56,10 +65,10 @@ codex exec --sandbox read-only -m gpt-5.1-codex-max -o /tmp/oracle-${ORACLE_ID}.
 codex exec --sandbox read-only -m gpt-5.1 -c model_reasoning_effort=high -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"
 ```
 
-| Request | Command flags |
-|---------|---------------|
-| Default | `-m gpt-5.1-codex-max` |
-| High reasoning | `-m gpt-5.1 -c model_reasoning_effort=high` |
+| Request | Command flags | Prompt used |
+|---------|---------------|-------------|
+| Default | `-m gpt-5.1-codex-max` | oracle-system-prompt-codex.md |
+| High reasoning | `-m gpt-5.1 -c model_reasoning_effort=high` | oracle-system-prompt-general.md |
 
 Wait for completion.
 
@@ -81,6 +90,7 @@ IMPORTANT: Return the full response without summarizing. The command handles pre
 
 **ALWAYS:**
 - Convert relative paths to absolute paths
+- Use the correct prompt based on model (pass "general" for high reasoning)
 - Return the complete Oracle response
 - Report errors clearly
 
@@ -93,7 +103,7 @@ IMPORTANT: Return the full response without summarizing. The command handles pre
 
 ## Examples
 
-### Example 1: Standard Query
+### Example 1: Standard Query (Coding - Codex-Max)
 
 **Query:** "Review the authentication flow in src/auth/login.ts"
 
@@ -104,13 +114,24 @@ IMPORTANT: Return the full response without summarizing. The command handles pre
 4. Runs: `cat /tmp/oracle-${ORACLE_ID}.md`
 5. Returns the full Oracle response
 
-### Example 2: High Reasoning Mode
+### Example 2: High Reasoning Mode (General Analysis)
 
-**Query:** "Use gpt-5.1-high to analyze the distributed cache architecture in src/cache/"
+**Query:** "Use gpt-5.1-high to analyze: Should we build vs buy for our authentication system?"
 
 **Agent does:**
-1. Resolves path: `/home/user/project/src/cache/`
-2. Runs: `ORACLE_ID=$(~/.claude/hack/oracle-query.sh "analyze the distributed cache architecture" "## Context Files\n\n- /home/user/project/src/cache/")`
+1. No files mentioned, so context is empty
+2. Runs: `ORACLE_ID=$(~/.claude/hack/oracle-query.sh "Should we build vs buy for our authentication system?" "" "general")`
+3. Runs: `codex exec --sandbox read-only -m gpt-5.1 -c model_reasoning_effort=high -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"`
+4. Runs: `cat /tmp/oracle-${ORACLE_ID}.md`
+5. Returns the full Oracle response
+
+### Example 3: High Reasoning with Context
+
+**Query:** "Use gpt-5.1-high to synthesize the key findings from src/research/"
+
+**Agent does:**
+1. Resolves path: `/home/user/project/src/research/`
+2. Runs: `ORACLE_ID=$(~/.claude/hack/oracle-query.sh "synthesize the key findings" "## Context Files\n\n- /home/user/project/src/research/" "general")`
 3. Runs: `codex exec --sandbox read-only -m gpt-5.1 -c model_reasoning_effort=high -o /tmp/oracle-${ORACLE_ID}.md "$(cat /tmp/oracle-query-${ORACLE_ID}.md)"`
 4. Runs: `cat /tmp/oracle-${ORACLE_ID}.md`
 5. Returns the full Oracle response
