@@ -19,6 +19,12 @@ Orchestrates code quality reviews using the code-quality-reviewer agent.
 
    Use git to identify relevant files.
    Return complete review (I will handle file writing).
+
+   CRITICAL - Always check for these production-breaking issues:
+   - Hardcoded URLs (staging, dev, localhost, test environments)
+   - Hardcoded API keys, secrets, or credentials
+   - Commented-out code that should be removed
+   - TODO/FIXME comments that block release
    ```
 
 2. **Wait for agent** to complete review
