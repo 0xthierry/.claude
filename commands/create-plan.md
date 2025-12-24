@@ -197,6 +197,13 @@ After structure approval:
 
 [Explicitly list out-of-scope items to prevent scope creep]
 
+## Code Design Principles
+
+- Export only what is needed by other files (no speculative exports)
+- No barrel exports (index.ts re-export files)
+- Direct imports preferred over directory imports
+- Keep implementation details private
+
 ## Implementation Approach
 
 [High-level strategy and reasoning]
@@ -330,6 +337,15 @@ After structure approval:
    - Do NOT write the plan with unresolved questions
    - The implementation plan must be complete and actionable
    - Every decision must be made before finalizing the plan
+
+7. **Export Hygiene (CRITICAL for TypeScript/JavaScript)**:
+   - NEVER plan for barrel exports (index.ts files that re-export from other files)
+   - NEVER export types, functions, or classes unless they are used outside the file
+   - Plan code with minimal public API surface - keep internals private
+   - When planning new modules: only export what consumers actually need
+   - When planning code snippets: omit `export` keyword unless the item is explicitly used elsewhere
+   - Prefer direct imports over barrel imports in all examples
+   - Flag for removal: any existing barrel exports or unnecessary exports found during research
 
 ## Success Criteria Guidelines
 

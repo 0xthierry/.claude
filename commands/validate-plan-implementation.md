@@ -79,6 +79,12 @@ For each phase in the plan:
    - Are there missing validations?
    - Could the implementation break existing functionality?
 
+5. **Check export hygiene**:
+   - Are there any new barrel exports (index.ts re-export files)?
+   - Are there exports on types/functions only used within the same file?
+   - Are there `export *` patterns exposing implementation details?
+   - Flag these as issues in the validation report
+
 ### Step 3: Generate Validation Report
 
 Create comprehensive validation summary:
@@ -110,6 +116,13 @@ Create comprehensive validation summary:
 #### Potential Issues:
 - Missing index on foreign key could impact performance
 - No rollback handling in migration
+
+#### Export Hygiene:
+✓ No barrel exports introduced
+✓ All exports are used externally
+OR
+✗ Barrel export found: `src/components/index.ts`
+✗ Unnecessary export: `AuthState` in `src/auth.ts` (only used locally)
 
 ### Manual Testing Required:
 1. UI functionality:
@@ -152,6 +165,8 @@ Always verify:
 - [ ] Error handling is robust
 - [ ] Documentation updated if needed
 - [ ] Manual test steps are clear
+- [ ] No barrel exports introduced (index.ts re-export files)
+- [ ] No unnecessary exports (types/functions only used locally)
 
 ## Relationship to Other Commands
 

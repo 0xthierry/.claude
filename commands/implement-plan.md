@@ -26,6 +26,19 @@ Plans are carefully designed, but reality can be messy. Your job is to:
 - Verify your work makes sense in the broader codebase context
 - Update checkboxes in the plan as you complete sections
 
+## Export Hygiene (CRITICAL)
+
+NEVER introduce these anti-patterns during implementation:
+- Barrel exports: index.ts/index.js files that re-export from other files
+- Unnecessary exports: `export` on types/functions only used within the same file
+- `export *` patterns that expose internal implementation details
+
+When writing code:
+- ONLY add `export` keyword if the item is imported by another file
+- Prefer direct imports: `import { Foo } from './Foo'` over `import { Foo } from './index'`
+- Keep types and helper functions private unless explicitly needed externally
+- If unsure whether to export: don't export, add it later when needed
+
 When things don't match the plan exactly, think about why and communicate clearly. The plan is your guide, but your judgment matters too.
 
 If you encounter a mismatch:

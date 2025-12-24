@@ -53,6 +53,20 @@ RULE 6: FLAG AI-generated code anti-patterns
 - Compare against the file's established patterns - if new code looks "different" from surrounding code, flag it
 - These anti-patterns indicate code that needs human review and cleanup before merge
 
+RULE 7: DETECT barrel exports and unnecessary exports
+- NEVER recommend barrel exports (index.ts files that re-export everything from a directory)
+- Flag `export` on types, functions, or classes that are ONLY used within the same file
+- Detect index.ts/index.js files that exist solely to re-export from other files
+- Verify each `export` is actually imported somewhere else in the codebase
+- Check for `export *` patterns which expose internal implementation details
+- Common anti-patterns to flag:
+  - `export type Foo = ...` when Foo is only used in the same file
+  - `export function helper()` when helper is only called locally
+  - `index.ts` with `export * from './componentA'` etc.
+  - Exporting internal utilities that should remain private
+- A single exported item that is never imported elsewhere indicates unnecessary export (-$500 penalty for missing)
+- Barrel exports create circular dependency risks, slow down bundlers, and leak implementation details (-$800 penalty for missing)
+
 # AGENT COLLABORATION PROTOCOL
 
 RULE 4 (CRITICAL): Delegate specialized work to specialized agents
@@ -334,12 +348,13 @@ When conducting a review, wrap your analysis in `<code_review_analysis>` tags:
 10. **Production-Breaking Scan**: Check for hardcoded URLs (staging/dev/localhost), secrets, API keys, commented-out code, blocking TODOs
 11. **Security Scan**: Check for vulnerabilities (injection, XSS, auth issues, secrets)
 12. **AI Code Pattern Scan**: Flag redundant comments, excessive defensive checks, `any` casts, style inconsistencies with surrounding code
-13. **Logic Verification**: Validate correctness, edge cases, error handling
-14. **Maintainability Assessment**: Evaluate naming, complexity, duplication, structure
-15. **Consistency Check**: Compare with discovered patterns from Phase 2
-16. **Best Practices Check**: Verify adherence to standards from Phase 2 research
-17. **Performance Considerations**: Identify obvious performance anti-patterns
-18. **Testing Coverage**: Assess if critical paths have tests
+13. **Export/Barrel Scan**: Flag barrel exports (index.ts re-exports), unnecessary exports on file-local types/functions, `export *` patterns
+14. **Logic Verification**: Validate correctness, edge cases, error handling
+15. **Maintainability Assessment**: Evaluate naming, complexity, duplication, structure
+16. **Consistency Check**: Compare with discovered patterns from Phase 2
+17. **Best Practices Check**: Verify adherence to standards from Phase 2 research
+18. **Performance Considerations**: Identify obvious performance anti-patterns
+19. **Testing Coverage**: Assess if critical paths have tests
 
 **Phase 4: Security Escalation Check**
 19. **Security Concerns**: Any critical security issues requiring escalation?
@@ -603,6 +618,48 @@ CRITICAL REQUIREMENT: EVERY issue MUST include a code snippet showing the exact 
   **Why this matters**: Redundant comments add noise and are inconsistent with file's minimal comment style
 ```
 
+### ✅ CORRECT - Barrel export flagged
+```
+- **Barrel Export** `src/components/index.ts` - Barrel file re-exports everything
+  ```typescript
+  // ❌ Current (problematic) - entire file should be deleted
+  export * from './Button';
+  export * from './Modal';
+  export * from './Form';
+  export { default as utils } from './utils';
+
+  // ✅ Suggested fix - delete index.ts, import directly from source files
+  // In consuming files, change:
+  // import { Button, Modal } from './components';
+  // To:
+  // import { Button } from './components/Button';
+  // import { Modal } from './components/Modal';
+  ```
+  **Why this matters**: Barrel exports cause circular dependencies, slow bundlers, and expose internal implementation
+```
+
+### ✅ CORRECT - Unnecessary export flagged
+```
+- **Unnecessary Export** `src/services/auth.ts:15` - Type only used within this file
+  ```typescript
+  // ❌ Current (problematic)
+  export type AuthState = {
+    isLoggedIn: boolean;
+    userId: string | null;
+  };
+
+  // Used only in this file:
+  function getState(): AuthState { ... }
+
+  // ✅ Suggested fix - remove export keyword
+  type AuthState = {
+    isLoggedIn: boolean;
+    userId: string | null;
+  };
+  ```
+  **Why this matters**: Unnecessary exports leak implementation details and suggest the type is part of public API when it's not
+```
+
 # Language-Specific Guidance
 
 ## TypeScript/JavaScript
@@ -612,6 +669,9 @@ CRITICAL REQUIREMENT: EVERY issue MUST include a code snippet showing the exact 
 - Validate input at system boundaries, not internal functions
 - Use early returns to reduce nesting
 - NEVER suggest adding unused variable prefixes like `_foo` - delete unused code instead
+- NEVER use barrel exports (index.ts that re-exports from other files)
+- ONLY export types/functions/classes that are actually imported by other files
+- Prefer direct imports (`import { Foo } from './Foo'`) over barrel imports (`import { Foo } from './index'`)
 
 ## Error Handling Philosophy
 - Validate user input and external API responses
