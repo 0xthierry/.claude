@@ -12,5 +12,5 @@ file-history
 history.jsonl
 stats-cache.json
 
-# Ignore .env files in skills (contains API keys)
-skills/**/.env
+# Ignore all .env files (contain API keys)
+**/.env
