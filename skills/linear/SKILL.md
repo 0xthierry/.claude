@@ -1,6 +1,6 @@
 ---
-name: linear
-description: Manage Linear issues, projects, and metrics. Use when user mentions Linear, issues, tickets, sprints, cycles, project tracking, or task management in Linear.
+name: managing-linear
+description: Manage Linear issues, projects, cycles, and team metrics using the Linear SDK. Use when user mentions Linear, issues, tickets, tasks, bugs, sprints, cycles, backlogs, project tracking, milestones, assignments, priorities, estimates, roadmap, velocity, burndown, or when working with URLs containing linear.app.
 ---
 
 # Using Linear
@@ -68,39 +68,68 @@ bun --preload ~/.claude/skills/linear/preload.ts -e "
 "
 ```
 
+## Common Patterns
+
+### Assigning Issues to Users
+Don't guess user IDs - resolve them first:
+```bash
+bun --preload ~/.claude/skills/linear/preload.ts -e "
+  const user = await linear.resolveUser('sarah')
+  if (user.found) {
+    console.log('Found:', user.user.name, user.user.id)
+    // Use user.user.id for assignment
+  } else {
+    console.log('User not found')
+  }
+"
+```
+
+### Changing Issue State
+Always check available states for the team first:
+```bash
+bun --preload ~/.claude/skills/linear/preload.ts -e "
+  const states = await linear.getTeamStates('ENG')
+  console.log('Available states:', states.states.map(s => s.name).join(', '))
+  // Then use the exact state name in updateIssue
+"
+```
+
+### Flexible Identifier Input
+The skill accepts multiple formats:
+- `ENG-123` - standard format
+- `https://linear.app/myorg/issue/ENG-123` - full URL
+- `123` - number only (requires team context)
+
+## Common Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "No .env file found" | Missing API key | Create `.env` with `LINEAR_API_KEY=...` |
+| "Authentication failed" | Invalid API key | Get new key at linear.app/settings/api |
+| "Team 'X' not found" | Wrong team key | Run `preflight()` to see available teams |
+| "State 'X' not found" | Wrong state name | Run `getTeamStates('TEAM')` to see options |
+| "User not found" | User doesn't exist | Run `listUsers()` to see all users |
+
+## Need Custom Functionality?
+
+If you need operations not covered by the built-in functions, you can use the Linear SDK directly. See the "Exploring the Linear SDK Types" section in references/api.md for:
+- How to access the raw client
+- Discovering available methods and types
+- Common SDK patterns
+- Writing custom functions
+
 ## Available Functions
 
-See [REFERENCE.md](REFERENCE.md) for complete API documentation.
-See [WORKFLOWS.md](WORKFLOWS.md) for common workflows.
-See [EXAMPLES.md](EXAMPLES.md) for reasoning patterns and examples.
+See [references/api.md](references/api.md) for complete API documentation including:
+- **Issues**: listIssues, getIssue, createIssue, updateIssue, searchIssues
+- **Projects**: listProjects, getProject, getProjectMetrics
+- **Cycles**: listCycles, getCycleMetrics
+- **Teams/Users**: listTeams, getTeamStates, getTeamLabels, listUsers, resolveUser, resolveTeam
+- **Comments**: listComments, addComment
+- **Utilities**: preflight, parseIdentifier, filterSuggest
 
-### Issues
-- `linear.listIssues(options?)` - List issues with filters
-- `linear.getIssue(identifier)` - Get issue by identifier (e.g., 'ENG-123')
-- `linear.createIssue(payload)` - Create new issue
-- `linear.updateIssue(identifier, payload)` - Update existing issue
-- `linear.searchIssues(query, options?)` - Semantic search
-
-### Projects
-- `linear.listProjects(options?)` - List projects
-- `linear.getProject(name)` - Get project by name
-- `linear.getProjectMetrics(name)` - Get project analytics
-
-### Cycles
-- `linear.listCycles(options?)` - List sprints/cycles
-- `linear.getCycleMetrics(options?)` - Get sprint burndown
-
-### Teams
-- `linear.listTeams()` - List all teams
-
-### Users
-- `linear.listUsers()` - List all workspace users
-- `linear.resolveUser(nameOrEmail)` - Find user by partial name/email
-
-### Utilities
-- `linear.preflight()` - Session init: user, org, teams, rate limits
-- `linear.parseIdentifier(input)` - Normalize "123", "ENG-123", or URLs
-- `linear.filterSuggest(query)` - AI-powered filter suggestions
+See [references/workflows.md](references/workflows.md) for common workflows.
+See [references/examples.md](references/examples.md) for reasoning patterns and examples.
 
 ## Output Format
 

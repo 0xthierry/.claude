@@ -1,4 +1,5 @@
 import { getClient, priorityToNumber, handleError } from './common.ts'
+import { resolveUser } from './users.ts'
 
 // ============================================================================
 // Types
@@ -56,6 +57,8 @@ export interface UpdateIssuePayload {
     priority?: 'urgent' | 'high' | 'medium' | 'low' | 'none'
     state?: string
     assignee?: 'me' | 'none' | string
+    addLabels?: string[]      // Label names to add
+    removeLabels?: string[]   // Label names to remove
 }
 
 // ============================================================================
@@ -341,6 +344,58 @@ export async function updateIssue(
             input.assigneeId = viewer.id
         } else if (payload.assignee === 'none') {
             input.assigneeId = null
+        } else if (payload.assignee) {
+            // Check if it's a UUID (user ID)
+            if (/^[0-9a-f-]{36}$/i.test(payload.assignee)) {
+                input.assigneeId = payload.assignee
+            } else {
+                // Treat as name/email and resolve
+                const resolved = await resolveUser(payload.assignee)
+                if (resolved.found && resolved.user) {
+                    input.assigneeId = resolved.user.id
+                } else {
+                    throw new Error(`User '${payload.assignee}' not found. Use listUsers() to see available users.`)
+                }
+            }
+        }
+
+        // Handle label changes
+        if (payload.addLabels?.length || payload.removeLabels?.length) {
+            const team = await issue.team
+            if (team) {
+                const teamLabels = await team.labels()
+                const currentLabels = await issue.labels()
+                const currentIds = new Set(currentLabels.nodes.map(l => l.id))
+
+                // Add labels
+                if (payload.addLabels?.length) {
+                    for (const labelName of payload.addLabels) {
+                        const label = teamLabels.nodes.find(
+                            l => l.name.toLowerCase() === labelName.toLowerCase()
+                        )
+                        if (label) {
+                            currentIds.add(label.id)
+                        } else {
+                            const available = teamLabels.nodes.map(l => l.name).join(', ')
+                            throw new Error(`Label '${labelName}' not found. Available: ${available}`)
+                        }
+                    }
+                }
+
+                // Remove labels
+                if (payload.removeLabels?.length) {
+                    for (const labelName of payload.removeLabels) {
+                        const label = teamLabels.nodes.find(
+                            l => l.name.toLowerCase() === labelName.toLowerCase()
+                        )
+                        if (label) {
+                            currentIds.delete(label.id)
+                        }
+                    }
+                }
+
+                input.labelIds = Array.from(currentIds)
+            }
         }
 
         if (Object.keys(input).length === 0) {

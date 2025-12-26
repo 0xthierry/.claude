@@ -4,17 +4,41 @@ export {
     listIssues,
     getIssue,
     createIssue,
-    updateIssue,
-    type IssueFilters,
-    type IssueOutput,
-    type IssueDetail,
-    type CreateIssuePayload,
-    type UpdateIssuePayload
+    updateIssue
 } from './issues.ts'
 
-// Will add more exports as we implement each module:
-// export { listProjects, getProject, getProjectMetrics } from './projects.ts'
-// etc.
+export {
+    listProjects,
+    getProject,
+    getProjectMetrics
+} from './projects.ts'
+
+export {
+    listCycles,
+    getCycleMetrics
+} from './cycles.ts'
+
+export {
+    listTeams,
+    getTeamStates,
+    getTeamLabels,
+    resolveTeam
+} from './teams.ts'
+
+export {
+    listUsers,
+    resolveUser
+} from './users.ts'
+
+export {
+    searchIssues,
+    filterSuggest
+} from './search.ts'
+
+export {
+    listComments,
+    addComment
+} from './comments.ts'
 
 import { getClient } from './common.ts'
 
