@@ -11,3 +11,6 @@ file-history
 .credentials.json
 history.jsonl
 stats-cache.json
+
+# Ignore .env files in skills (contains API keys)
+skills/**/.env
