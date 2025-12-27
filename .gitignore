@@ -14,3 +14,7 @@ stats-cache.json
 
 # Ignore all .env files (contain API keys)
 **/.env
+
+# Local configuration
+.claude.json
+.claude.json.backup
